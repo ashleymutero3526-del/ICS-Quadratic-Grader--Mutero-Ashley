@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICS Quadratic Grader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result, .error {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .result {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            white-space: pre-wrap; /* Keeps formatting for roots/messages */
+        }
+        .error {
+            color: #dc3545;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ICT251 Single-File Web App</h1>
+        <p>This page solves a quadratic equation and converts a score to a letter grade, as required for the assignment.</p>
+
+        <hr>
+        <h2>1. Quadratic Equation Solver ($ax^2 + bx + c = 0$)</h2>
+        <form id="quadratic-form">
+            <div class="form-group">
+                <label for="a">Enter coefficients a, b, and c:</label>
+                <div class="input-group">
+                    <input type="number" id="a" placeholder="a" required>
+                    <input type="number" id="b" placeholder="b" required>
+                    <input type="number" id="c" placeholder="c" required>
+                </div>
+                <div id="quadratic-error" class="error"></div>
+            </div>
+            
+            <button type="button" onclick="solveQuadratic()">Compute Roots</button>
+            <button type="reset" onclick="document.getElementById('quadratic-result').innerHTML = ''">Reset</button>
+        </form>
+        
+        <div id="quadratic-result" class="result">
+            </div>
+
+        <hr>
+        <h2>2. Numeric Score Grader (0-100)</h2>
+        <form id="grading-form">
+            <div class="form-group">
+                <label for="score">Enter Numeric Score (0-100):</label>
+                <input type="number" id="score" min="0" max="100" placeholder="0-100" required>
+                <div id="grading-error" class="error"></div>
+            </div>
+            
+            <button type="button" onclick="getLetterGrade()">Compute Grade</button>
+            <button type="reset" onclick="document.getElementById('grading-result').innerHTML = ''">Reset</button>
+        </form>
+        
+        <div id="grading-result" class="result">
+            </div>
+    </div>
+
+    <script>
+        /**
+         * QUADRATIC SOLVER LOGIC [cite: 30]
+         */
+        function solveQuadratic() {
+            const a = parseFloat(document.getElementById('a').value);
+            const b = parseFloat(document.getElementById('b').value);
+            const c = parseFloat(document.getElementById('c').value);
+            const errorElement = document.getElementById('quadratic-error');
+            const resultElement = document.getElementById('quadratic-result');
+
+            errorElement.innerHTML = '';
+            resultElement.innerHTML = '';
+
+            // Validation: All inputs must be valid numbers [cite: 34]
+            if (isNaN(a) || isNaN(b) || isNaN(c) || document.getElementById('a').value.trim() === '' || document.getElementById('b').value.trim() === '' || document.getElementById('c').value.trim() === '') {
+                errorElement.innerHTML = 'Please enter valid numbers for a, b, and c.';
+                return;
+            }
+
+            // Validation: a cannot be 0 [cite: 33]
+            if (a === 0) {
+                errorElement.innerHTML = 'Error: The coefficient \'a\' cannot be zero for a quadratic equation.';
+                return;
+            }
+
+            // Calculate Discriminant (D = b^2 - 4ac) [cite: 38]
+            const D = b * b - 4 * a * c;
+            const discriminantOutput = `Discriminant (D = b² - 4ac): **${D.toFixed(4)}**`;
+
+            let natureOfRoots;
+            let roots;
+
+            if (D > 0) {
+                // Two distinct real roots [cite: 41]
+                natureOfRoots = 'Nature of Roots: **Two distinct real roots** ($D > 0$)';
+                const root1 = (-b + Math.sqrt(D)) / (2 * a);
+                const root2 = (-b - Math.sqrt(D)) / (2 * a);
+                roots = `Root 1 ($x_1$): **${root1.toFixed(4)}**\nRoot 2 ($x_2$): **${root2.toFixed(4)}**`;
+            } else if (D === 0) {
+                // One real repeated root [cite: 42]
+                natureOfRoots = 'Nature of Roots: **One real repeated root** ($D = 0$)';
+                const root = -b / (2 * a);
+                roots = `Repeated Root ($x$): **${root.toFixed(4)}**`;
+            } else {
+                // Two complex conjugate roots [cite: 43]
+                natureOfRoots = 'Nature of Roots: **Two complex conjugate roots** ($D < 0$)';
+                const realPart = (-b / (2 * a)).toFixed(4);
+                const imaginaryPart = (Math.sqrt(-D) / (2 * a)).toFixed(4);
+                roots = `Root 1 ($x_1$): **${realPart} + ${imaginaryPart}i**\nRoot 2 ($x_2$): **${realPart} - ${imaginaryPart}i**`;
+            }
+
+            // Output neatly formatted results [cite: 45]
+            resultElement.innerHTML = `
+                **Equation:** ${a}x² + ${b}x + ${c} = 0\n\n
+                ${discriminantOutput}\n
+                ${natureOfRoots}\n\n
+                **Roots:**\n
+                ${roots}
+            `;
+        }
+
+        /**
+         * GRADING SYSTEM LOGIC [cite: 46]
+         */
+        function getLetterGrade() {
+            const scoreInput = document.getElementById('score').value;
+            const score = parseInt(scoreInput);
+            const errorElement = document.getElementById('grading-error');
+            const resultElement = document.getElementById('grading-result');
+
+            errorElement.innerHTML = '';
+            resultElement.innerHTML = '';
+
+            // Validation: only numbers in [0, 100]; show an error if out of range or empty [cite: 48]
+            if (scoreInput.trim() === '' || isNaN(score) || score < 0 || score > 100) {
+                errorElement.innerHTML = 'Error: Please enter a whole number score between 0 and 100.';
+                return;
+            }
+
+            let grade;
+            let message;
+
+            // Determine grade based on the exact inclusive ranges [cite: 10, 11, 12, 13, 14, 15, 16, 17, 52]
+            if (score >= 85) { // 85-100 [cite: 11]
+                grade = 'A+';
+                message = 'Excellent performance!';
+            } else if (score >= 75) { // 75-84 [cite: 12]
+                grade = 'A';
+                message = 'Great job!';
+            } else if (score >= 65) { // 65-74 [cite: 13]
+                grade = 'B+';
+                message = 'Very good!';
+            } else if (score >= 60) { // 60-64 [cite: 14]
+                grade = 'B';
+                message = 'Good result.';
+            } else if (score >= 55) { // 55-59 [cite: 15]
+                grade = 'C+';
+                message = 'Satisfactory.';
+            } else if (score >= 50) { // 50-54 [cite: 16]
+                grade = 'C';
+                message = 'Passable.';
+            } else { // 0-49 [cite: 17]
+                grade = 'D';
+                message = 'Needs improvement.';
+            }
+            // Edge cases like 85, 75, 50, 49, 0, 100 are correctly handled by the logic above [cite: 52]
+
+            // Output: "Score 82 -> Grade A" [cite: 51]
+            resultElement.innerHTML = `
+                **Score ${score}** $\to$ **Grade ${grade}**\n
+                *${message}*
+            `;
+        }
+    </script>
+</body>
+</html>
